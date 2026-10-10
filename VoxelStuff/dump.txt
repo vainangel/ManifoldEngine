@@ -1,0 +1,153 @@
+	//mk::WorldObject* sample_cube = new mk::WorldObject;
+	//sample_cube->mesh() = std::shared_ptr<mk::Mesh>(mk::Mesh::get_sample_cube()->with_shader(shader));
+
+	//std::vector<mk::WorldObject*> cubes;
+	//for (int i = 0; i < 10; ++i) {
+	//	cubes.push_back(new mk::WorldObject);
+	//	cubes[i]->mesh() = std::shared_ptr<mk::Mesh>(mk::Mesh::get_sample_cube()->with_shader(shader));
+
+	//	cubes[i]->transform().position = glm::vec3(rand() % 20, rand() % 20, rand() % 20);
+	//}
+
+	//constexpr size_t Size = 8;
+	//constexpr size_t WorldSize = 8;
+	//mk::Chunk<Size> chunk_data[WorldSize][WorldSize][WorldSize];
+	//std::vector<mk::WorldObject*> chunks;
+	//
+	//for (int x = 0; x < WorldSize; ++x) for (int y = 0; y < WorldSize; ++y) for (int z = 0; z < WorldSize; ++z) {
+	//	mk::Chunk<Size>& cur = chunk_data[x][y][z];
+	//
+	//	mk::Chunk<Size>* left = x == 0 ? nullptr : &chunk_data[x - 1][y][z];
+	//	mk::Chunk<Size>* right = x + 1 == Size ? nullptr : &chunk_data[x + 1][y][z];
+	//	mk::Chunk<Size>* bottom = y == 0 ? nullptr : &chunk_data[x][y - 1][z];
+	//	mk::Chunk<Size>* top = y + 1 == Size ? nullptr : &chunk_data[x][y + 1][z];
+	//	mk::Chunk<Size>* front = z == 0 ? nullptr : &chunk_data[x][y][z - 1];
+	//	mk::Chunk<Size>* back = z + 1 == Size ? nullptr : &chunk_data[x][y][z + 1];
+	//
+	//	cur.neighbors[(size_t)mk::Neighbor::FRONT] = front;
+	//	cur.neighbors[(size_t)mk::Neighbor::BACK] = back;
+	//	cur.neighbors[(size_t)mk::Neighbor::LEFT] = left;
+	//	cur.neighbors[(size_t)mk::Neighbor::RIGHT] = right;
+	//	cur.neighbors[(size_t)mk::Neighbor::UP] = top;
+	//	cur.neighbors[(size_t)mk::Neighbor::DOWN] = bottom;
+	//}
+
+	//for (int cx = 0; cx < WorldSize; ++cx) for (int cy = 0; cy < WorldSize; ++cy) for (int cz = 0; cz < WorldSize; ++cz) {
+	//	std::cout << "Generating (" << cx << ", " << cy << ", " << cz << ")...\n";
+	//	for (int x = 0; x < Size; ++x) for (int y = 0; y < Size; ++y) for (int z = 0; z < Size; ++z) {
+	//		float dx = Size * cx + x;
+	//		float dy = Size * cy + y;
+	//		float dz = Size * cz + z;
+	//
+	//		float radius = 60.0f;
+	//
+	//		if (sqrtf(dx * dx + dy * dy + dz * dz) > radius) chunk_data[cx][cy][cz].voxels[x][y][z].set = false;
+	//	}
+	//}
+
+	//for (int x = 0; x < WorldSize; ++x) for (int y = 0; y < WorldSize; ++y) for (int z = 0; z < WorldSize; ++z) {
+	//	auto* obj = new mk::WorldObject;
+	//	obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(chunk_data[x][y][z]));
+	//	obj->mesh()->with_shader(shader);
+	//
+	//	obj->transform().position = glm::vec3(1 * Size * x, 1 * Size * y, 1 * Size * z);
+	//	obj->transform().scale = 0.5f;
+	//
+	//	chunks.push_back(obj);
+	//}
+
+	//for (auto&& chunk : chunk_data) {
+	//	auto* obj = new mk::WorldObject;
+	//	chunks.push_back(obj);
+	//
+	//	obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(chunk));
+	//}
+
+	//mk::Chunk<ChunkSize> left, right;
+
+	//left.neighbors[static_cast<size_t>(mk::Neighbor::RIGHT)] = &right;
+	//right.neighbors[static_cast<size_t>(mk::Neighbor::LEFT)] = &left;
+
+	//mk::WorldObject* left_obj = new mk::WorldObject, * right_obj = new mk::WorldObject;
+	//left_obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(left));
+	//right_obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(right));
+	//left_obj->mesh()->with_shader(shader);
+	//right_obj->mesh()->with_shader(shader);
+
+	//right_obj->transform().position.x = ChunkSize;
+
+	//left_obj->transform().scale = 0.5f;
+	//right_obj->transform().scale = 0.5f;
+
+	//std::vector<mk::WorldObject*> chunks;
+	//for (int x = 0; x < Size; ++x) for (int y = 0; y < Size; ++y) for (int z = 0; z < Size; ++z) {
+	//	mk::WorldObject* chunk = new mk::WorldObject;
+	//	chunks.push_back(chunk);
+
+	//	chunk->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(world_chunks[x][y][z]));
+	//	chunk->mesh()->with_shader(shader);
+
+	//	chunk->transform().position = glm::vec3(ChunkSize * x, ChunkSize * y, ChunkSize * z);
+	//	chunk->transform().scale = 0.5f;
+	//}
+
+	//mk::Chunk<Size> chunk;
+	//for (int x = 0; x < Size; ++x) for (int y = 0; y < Size; ++y) for (int z = 0; z < Size; ++z) {
+	//	chunk.voxels[x][y][z].set = false;
+	//}
+
+	//chunk.voxels[0][0][0].set = true; 
+	//chunk.voxels[0][0][1].set = true;
+
+	//for (int i = 0; i < Size; ++i) chunk.voxels[0][0][i].set = true; 
+
+	//for (int x = 0; x < Size; ++x) for (int y = 0; y < Size; ++y) for (int z = 0; z < Size; ++z) {
+	//	float dx = x;
+	//	float dy = y;
+	//	float dz = z;
+	//	float radius = 10.0f;
+	//	if (sqrtf(dx * dx + dy * dy + dz * dz) <= radius) chunk.voxels[x][y][z].set = true;
+	//}
+
+	//mk::WorldObject* chunk_obj = new mk::WorldObject;
+	//chunk_obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(chunk));
+	//chunk_obj->mesh()->with_shader(shader);
+
+	//chunk_obj->transform().position = glm::vec3(100.0f, 0.0f, 100.0f);
+
+	//mk::Chunk<Size> chunks[WorldSize][WorldSize];
+	//for (int cx = 0; cx < WorldSize; ++cx) for (int cz = 0; cz < WorldSize; ++cz) {
+	//	std::cout << "Generating (" << cx << ", " << 0 << ", " << cz << ")...\n";
+	//	for (int x = 0; x < Size; ++x) for (int y = 0; y < Size; ++y) for (int z = 0; z < Size; ++z) {
+	//		float dx = Size * cx + x;
+	//		float dy = y;
+	//		float dz = Size * cz + z;
+	//		float radius = 60.0f;
+	//		if (sqrtf(dx * dx + dy * dy + dz * dz) > radius) chunks[cx][cz].voxels[x][y][z].set = false;
+	//	}
+	//}
+
+	//for (int x = 0; x < WorldSize; ++x) for (int y = 0; y < WorldSize; ++y) for (int z = 0; z < WorldSize; ++z) {
+	//	mk::Chunk<Size>& cur = chunks[x][z];
+
+	//	mk::Chunk<Size>* left = x == 0 ? nullptr : &chunks[x - 1][z];
+	//	mk::Chunk<Size>* right = x + 1 == Size ? nullptr : &chunks[x + 1][z];
+	//	mk::Chunk<Size>* front = z == 0 ? nullptr : &chunks[x][z - 1];
+	//	mk::Chunk<Size>* back = z + 1 == Size ? nullptr : &chunks[x][z + 1];
+
+	//	cur.neighbors[(size_t)mk::Neighbor::FRONT] = front;
+	//	cur.neighbors[(size_t)mk::Neighbor::BACK] = back;
+	//	cur.neighbors[(size_t)mk::Neighbor::LEFT] = left;
+	//	cur.neighbors[(size_t)mk::Neighbor::RIGHT] = right;
+	//}
+
+	//std::vector<mk::WorldObject*> chunk_objs;
+	//for (int x = 0; x < WorldSize; ++x) for (int z = 0; z < WorldSize; ++z) {
+	//	auto* obj = new mk::WorldObject;
+	//	obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(chunks[x][z]));
+	//	obj->mesh()->with_shader(shader);
+	//	//obj->transform().position += glm::vec3(WorldSize * x, 0, WorldSize * z);
+	//	obj->transform().position = glm::vec3(Size * x, 0, Size * z);
+	//	obj->transform().scale = 0.5f;
+	//	chunk_objs.push_back(obj);
+	//}

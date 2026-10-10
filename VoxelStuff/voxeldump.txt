@@ -1,0 +1,335 @@
+#pragma once 
+
+#include "Mesh.hpp"
+
+#include <algorithm>
+#include <iterator>
+
+#include <iostream>
+
+namespace mk {
+	constexpr size_t VOXEL_SPACING_CONTIGUOUS = 2.0f; 
+	constexpr size_t VOXEL_SPACING = VOXEL_SPACING_CONTIGUOUS;
+
+	struct Voxel {
+		bool set = true;
+	};
+
+	enum class Neighbor : size_t {
+		FRONT,
+		BACK,
+		LEFT,
+		RIGHT,
+		UP,
+		DOWN,
+	};
+
+	template <size_t Width, size_t Height=Width, size_t Depth=Width> struct Chunk {
+		Voxel voxels[Width][Height][Depth] = {};
+
+		const Chunk* neighbors[6] = {};
+	};
+
+	constexpr Vertex dep_[24] = {
+		// front 
+		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 0 }), // TL 0
+		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 1
+		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 1, 1 }), // BR 2
+		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BL 3
+
+		// back
+		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 4
+		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 0, 0 }), // TR 5
+		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BR 6
+		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 1, 1 }), // BL 7
+
+		// left
+		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 0, 0 }), // TL 8
+		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 9
+		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 1, 1 }), // BR 10 
+		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BL 11 
+
+		// right 
+		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 12
+		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 0, 0 }), // TR 13
+		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BR 14 
+		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 1, 1 }), // BL 15 
+
+		// top 
+		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 0 }), // 16
+		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 0 }), // 17
+		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 1 }), // 18
+		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 0, 1 }), // 19
+
+		// bottom 
+		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 0 }), // 20
+		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 1, 0 }), // 21
+		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 1, 1 }), // 22
+		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 1 }), // 23
+	};
+
+	constexpr Vertex cube_base_front[4] = {
+		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 0 }), // TL 0
+		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 1
+		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 1, 1 }), // BR 2
+		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BL 3
+	};
+
+	//namespace cube_base {
+	//	constexpr Vertex front[4] = {
+	//		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 0 }), // TL 0
+	//		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 1
+	//		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 1, 1 }), // BR 2
+	//		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BL 3
+	//	};
+	//	constexpr Vertex back[4] = {
+	//		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 4
+	//		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 0, 0 }), // TR 5
+	//		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BR 6
+	//		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 1, 1 }), // BL 7
+	//	};
+	//	constexpr Vertex left[4] = {
+	//		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 0, 0 }), // TL 8
+	//		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 9
+	//		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 1, 1 }), // BR 10 
+	//		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BL 11 
+	//	};
+	//	constexpr Vertex right[4] = {
+	//		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 12
+	//		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 0, 0 }), // TR 13
+	//		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BR 14 
+	//		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 1, 1 }), // BL 15 
+	//	};
+	//	constexpr Vertex top[4] = {
+	//		mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 0 }), // 16
+	//		mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 0 }), // 17
+	//		mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 1 }), // 18
+	//		mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 0, 1 }), // 19
+	//	};
+	//	constexpr Vertex bottom[4] = {
+	//		mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 0 }), // 20
+	//		mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 1, 0 }), // 21
+	//		mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 1, 1 }), // 22
+	//		mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 1 }), // 23
+	//	};
+
+	namespace cube_base {
+		constexpr Vertex front[4] = {
+			mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 0, 1 }), // TL 0
+			mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 0, 1 }), // TR 1
+			mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BR 2
+			mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 1 }), // BL 3
+		};
+		constexpr Vertex back[4] = {
+			mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 0, 1 }), // TL 4
+			mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 0, 1 }), // TR 5
+			mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BR 6
+			mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 0, 1 }), // BL 7
+		};
+		constexpr Vertex left[4] = {
+			mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 8
+			mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 9
+			mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 1, 0 }), // BR 10 
+			mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 1, 0 }), // BL 11 
+		};
+		constexpr Vertex right[4] = {
+			mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 0 }), // TL 12
+			mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 1, 0 }), // TR 13
+			mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 1, 0 }), // BR 14 
+			mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 1, 0 }), // BL 15 
+		};
+		constexpr Vertex top[4] = {
+			mk::Vertex({-1,  1,  1}, {0, 0, 0}, { 1, 1 }), // 16
+			mk::Vertex({-1,  1, -1}, {0, 0, 0}, { 1, 1 }), // 17
+			mk::Vertex({ 1,  1, -1}, {0, 0, 0}, { 1, 1 }), // 18
+			mk::Vertex({ 1,  1,  1}, {0, 0, 0}, { 1, 1 }), // 19
+		};
+		constexpr Vertex bottom[4] = {
+			mk::Vertex({-1, -1,  1}, {0, 0, 0}, { 0, 0 }), // 20
+			mk::Vertex({-1, -1, -1}, {0, 0, 0}, { 0, 0 }), // 21
+			mk::Vertex({ 1, -1, -1}, {0, 0, 0}, { 0, 0 }), // 22
+			mk::Vertex({ 1, -1,  1}, {0, 0, 0}, { 0, 0 }), // 23
+		};
+
+		constexpr GLuint indices_front[6] = { 3, 1, 0, 3, 2, 1 };
+		constexpr GLuint indices_back[6] = { 0, 1, 3, 1, 2, 3 };
+		constexpr GLuint indices_left[6] = { 3, 1, 0, 3, 2, 1 };
+		constexpr GLuint indices_right[6] = { 0, 1, 3, 1, 2, 3 };
+		constexpr GLuint indices_top[6] = { 2, 1, 0, 0, 3, 2 };
+		constexpr GLuint indices_bottom[6] = { 0, 1, 3, 1, 2, 3 };
+	}
+
+	GLuint dep_2[36] = {
+		3, 1, 0, 3, 2, 1,			// front
+		4, 5, 7, 5, 6, 7,			// back | normalized: 
+		11, 9, 8, 11, 10, 9,		// left 
+		12, 13, 15, 13, 14, 15,		// right 
+		18, 17, 16, 16, 19, 18,		// top 
+		20, 21, 22, 22, 23, 20,		// bottom 
+	};
+
+	template <size_t Width, size_t Height = Width, size_t Depth = Width> 
+	Mesh get_chunk_mesh(Chunk<Width, Height, Depth>& chunk) {
+		Mesh retval;
+
+		for (int x = 0; x < Width; ++x) {
+			for (int y = 0; y < Height; ++y) {
+				for (int z = 0; z < Depth; ++z) {
+					if (not chunk.voxels[x][y][z].set) continue;
+					// copy indices, add by offset
+					size_t idx_offset = retval.vertices.size();
+					//std::for_each(indices.begin(), indices.end(), [idx_offset](GLuint& x) { x += idx_offset; });
+
+					Vertex front[4] = {};
+					Vertex back[4] = {};
+					Vertex left[4] = {};
+					Vertex right[4] = {};
+					Vertex top[4] = {};
+					Vertex bottom[4] = {};
+
+					std::copy(cube_base::front, cube_base::front + 4, front);
+					std::copy(cube_base::back, cube_base::back + 4, back);
+					std::copy(cube_base::left, cube_base::left + 4, left);
+					std::copy(cube_base::right, cube_base::right + 4, right);
+					std::copy(cube_base::top, cube_base::top + 4, top);
+					std::copy(cube_base::bottom, cube_base::bottom + 4, bottom);
+
+					for (Vertex& v : front) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+					for (Vertex& v : back) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+					for (Vertex& v : left) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+					for (Vertex& v : right) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+					for (Vertex& v : top) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+					for (Vertex& v : bottom) v.pos += glm::vec3(VOXEL_SPACING * (float)x, VOXEL_SPACING * (float)y, VOXEL_SPACING * (float)z);
+
+					// -- add exposed faces
+
+					bool front_set = true;
+					bool back_set = true;
+					bool left_set = true;
+					bool right_set = true;
+					bool top_set = true;
+					bool bottom_set = true;
+
+					//if (x == 0) {
+					//	left_set = chunk.neighbors[(size_t)Neighbor::LEFT] ? !chunk.neighbors[(size_t)Neighbor::LEFT]->voxels[Width-1][y][z].set : true;
+					//	right_set = !chunk.voxels[x + 1][y][z].set;
+					//}
+					//else if (x + 1 == Width) {
+					//	left_set = !chunk.voxels[x - 1][y][z].set;
+					//	right_set = chunk.neighbors[(size_t)Neighbor::RIGHT] ? !chunk.neighbors[(size_t)Neighbor::RIGHT]->voxels[0][y][z].set : true;
+					//}
+					//else {
+					//	left_set = !chunk.voxels[x - 1][y][z].set;
+					//	right_set = !chunk.voxels[x + 1][y][z].set;
+					//}
+
+					//if (y == 0) {
+					//	top_set = !chunk.voxels[x][y + 1][z].set;
+					//	bottom_set = chunk.neighbors[(size_t)Neighbor::DOWN] ? !chunk.neighbors[(size_t)Neighbor::DOWN]->voxels[x][Height-1][z].set : true;
+					//}
+					//else if (y + 1 == Height) {
+					//	top_set = chunk.neighbors[(size_t)Neighbor::UP] ? !chunk.neighbors[(size_t)Neighbor::UP]->voxels[x][0][z].set : true;
+					//	bottom_set = !chunk.voxels[x][y - 1][z].set;
+					//}
+					//else {
+					//	top_set = !chunk.voxels[x][y + 1][z].set;
+					//	bottom_set = !chunk.voxels[x][y - 1][z].set;
+					//}
+
+					//if (z == 0) {
+					//	back_set = chunk.neighbors[(size_t)Neighbor::BACK] ? !chunk.neighbors[(size_t)Neighbor::BACK]->voxels[x][y][Depth-1].set : true;
+					//	front_set = !chunk.voxels[x][y][z + 1].set;
+					//}
+					//else if (z + 1 == Depth) {
+					//	back_set = !chunk.voxels[x][y][z - 1].set;
+					//	front_set = chunk.neighbors[(size_t)Neighbor::FRONT] ? !chunk.neighbors[(size_t)Neighbor::FRONT]->voxels[x][y][0].set : true;
+					//} 
+					//else {
+					//	back_set = !chunk.voxels[x][y][z - 1].set;
+					//	front_set = !chunk.voxels[x][y][z + 1].set;
+					//}
+
+					// - front 
+					if (front_set) {
+						std::copy(front, front + 4, std::back_inserter(retval.vertices));
+						
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_front, cube_base::indices_front + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+						
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+				
+					// - back
+					if (back_set) {
+						std::copy(back, back + 4, std::back_inserter(retval.vertices));
+
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_back, cube_base::indices_back + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+
+					// - left 
+					if (left_set) {
+						std::copy(left, left + 4, std::back_inserter(retval.vertices));
+
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_left, cube_base::indices_left + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+
+					// - right 
+					if (right_set) {
+						std::copy(right, right + 4, std::back_inserter(retval.vertices));
+
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_right, cube_base::indices_right + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+
+					// - top 
+					if (top_set) {
+						std::copy(top, top + 4, std::back_inserter(retval.vertices));
+
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_top, cube_base::indices_top + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+
+					// - bottom 
+					if (bottom_set) {
+						std::copy(bottom, bottom + 4, std::back_inserter(retval.vertices));
+
+						GLuint indices[6] = {};
+						std::copy(cube_base::indices_bottom, cube_base::indices_bottom + 6, indices);
+						for (auto& x : indices) x += idx_offset;
+
+						std::copy(indices, indices + 6, std::back_inserter(retval.indices));
+
+						idx_offset = retval.vertices.size();
+					}
+				}
+			}
+		}
+
+		return retval;
+	}
+}

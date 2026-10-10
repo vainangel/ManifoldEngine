@@ -1,0 +1,212 @@
+#include "DrawContext.hpp"
+#include "Shader.hpp"
+#include "DefaultShaders.hpp"
+#include "Mesh.hpp"
+#include "IOUtil.hpp"
+#include "WorldObject.hpp"
+#include "Voxel.hpp"
+
+#include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <memory>
+#include <chrono>
+#include <array>
+
+#include <glm/glm.hpp>
+#include <glm/vec4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+int main() {
+	std::shared_ptr<mk::DrawContext> ctx = std::shared_ptr<mk::DrawContext>(mk::DrawContext::create_context(600, 400, "Voxel Stuff"));
+
+	std::shared_ptr<mk::Shader> shader = std::shared_ptr<mk::Shader>(mk::Shader::create_shader()
+		->with_vertex(mk::util::get_resource("basic_vertex_shader.glsl"))
+		->with_fragment(mk::util::get_resource("basic_fragment_shader.glsl"))
+		->link());
+
+	std::shared_ptr<mk::Shader> skybox_shader = std::shared_ptr<mk::Shader>(mk::Shader::create_shader()
+		->with_vertex(mk::util::get_resource("skybox_vertex_shader.glsl"))
+		->with_fragment(mk::util::get_resource("skybox_fragment_shader.glsl"))
+		->link());
+	
+	mk::WorldObject* skybox = new mk::WorldObject;
+	skybox->mesh() = std::shared_ptr<mk::Mesh>(mk::Mesh::get_sample_cube()->with_shader(skybox_shader));
+	skybox->mesh()->cull_face = GL_FRONT;
+	
+	//constexpr size_t d = 8;
+	//constexpr size_t ChunkSize = 64;
+
+	//using SphereWorld3D = std::array<std::array<std::array<mk::Chunk<ChunkSize>, d>, d>, d>;
+	//SphereWorld3D* sphere_world = new SphereWorld3D;
+	//std::vector<mk::WorldObject*> sphere_world_objs;
+
+	//for (int cx = 0; cx < d; ++cx) for (int cy = 0; cy < d; ++cy) for (int cz = 0; cz < d; ++cz) {
+	//	sphere_world->at(0).at(0).at(0).voxels[cx][cy][cz].set = false;
+
+	//	sphere_world->at(3).at(0).at(0).voxels[cx][cy][cz].set = false;
+	//}
+
+	//std::cout << "Generating sphere world...\n";
+
+	//for (int cx = 0; cx < d; ++cx) for (int cy = 0; cy < d; ++cy) for (int cz = 0; cz < d; ++cz) {
+	//	mk::Chunk<ChunkSize>& chunk = sphere_world->at(cz).at(cx).at(cy);
+	//
+	//	for (int x = 0; x < ChunkSize; ++x) for (int y = 0; y < ChunkSize; ++y) for (int z = 0; z < ChunkSize; ++z) {
+	//		int k = ChunkSize * d / 2;
+	//		int h = ChunkSize * d / 2;
+	//		int l = ChunkSize * d / 2;
+
+	//		int px = ChunkSize * cx + x;
+	//		int py = ChunkSize * cy + y;
+	//		int pz = ChunkSize * cz + z;
+
+	//		int radius = 256;
+
+	//		float dp = sqrt((float)(px - k) * (px - k) + (py - h) * (py - h) + (pz - l) * (pz - l));
+	//		if (dp > radius) chunk.voxels[x][y][z].set = false;
+	//	}
+	//}
+
+	//int n = 1;
+	//double mesh_time_avg = 1.0f;
+	//std::vector<size_t> times;
+
+	//std::vector<mk::Mesh> sphere_world_meshes;
+
+	//std::cout << "Generating sphere world meshes...\n";
+
+	//size_t total_vertices = 0;
+
+	//for (int cx = 0; cx < d; ++cx) for (int cy = 0; cy < d; ++cy) for (int cz = 0; cz < d; ++cz) {
+	//	mk::Chunk<ChunkSize>& chunk = sphere_world->at(cz).at(cx).at(cy); // arbitrary, "works" in any indexing order (probably) 
+
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::FRONT)] = cz == d - 1 ? nullptr : &sphere_world->at(cz + 1).at(cx).at(cy);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::BACK)] = cz == 0 ? nullptr : &sphere_world->at(cz - 1).at(cx).at(cy);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::LEFT)] = cx == 0 ? nullptr : &sphere_world->at(cz).at(cx - 1).at(cy);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::RIGHT)] = cx == d - 1 ? nullptr : &sphere_world->at(cz).at(cx + 1).at(cy);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::UP)] = cy == d - 1 ? nullptr : &sphere_world->at(cz).at(cx).at(cy + 1);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::DOWN)] = cy == 0 ? nullptr : &sphere_world->at(cz).at(cx).at(cy - 1);
+
+	//	auto start = std::chrono::high_resolution_clock::now();
+
+	//	auto mesh = mk::get_chunk_mesh(chunk);
+
+	//	auto end = std::chrono::high_resolution_clock::now();
+	//	++n;
+
+	//	if (mesh.vertices.empty()) continue; 
+	//	sphere_world_meshes.push_back(mesh);
+	//	total_vertices += mesh.vertices.size();
+
+	//	mk::WorldObject* obj = new mk::WorldObject;
+	//	obj->mesh() = std::make_shared<mk::Mesh>(mesh);
+	//	obj->mesh()->with_shader(shader);
+	//	obj->transform().position = glm::vec3(ChunkSize * cx, ChunkSize * cy, ChunkSize * cz);
+	//	obj->transform().scale = 0.5f;
+	//	times.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+	//	sphere_world_objs.push_back(obj);
+	//}
+
+	//std::cout << sphere_world_objs.size() << " meshes generated for sphere world.\n";
+	//std::cout << total_vertices << " total verticies.\n";
+
+	//size_t sum = 0;
+	//for (auto x : times) sum += x;
+	//std::cout << "Total time: " << sum / 1000 << "ms\n";
+	//std::cout << "Avg: " << ((double)sum / times.size()) << "us\n";
+
+	//// Meant to capture "all" edge cases 
+	//constexpr size_t DebugChunkSize = 8;
+	//constexpr size_t DebugWorldSize = 2;
+	//std::vector<mk::Chunk<DebugChunkSize>> debug_world(DebugWorldSize * DebugWorldSize); // 2D chunk map 
+
+	//for (int cx = 0; cx < DebugWorldSize; ++cx) for (int cz = 0; cz < DebugWorldSize; ++cz) {
+	//	mk::Chunk<DebugChunkSize>& chunk = debug_world.at(cx * DebugWorldSize + cz);
+
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::FRONT)] = cz == DebugWorldSize - 1 ? nullptr : &debug_world.at(cx * DebugWorldSize + cz + 1);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::BACK)] = cz == 0 ? nullptr : &debug_world.at(cx * DebugWorldSize + cz - 1);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::LEFT)] = cx == 0 ? nullptr : &debug_world.at((cx - 1) * DebugWorldSize + cz);
+	//	chunk.neighbors[static_cast<size_t>(mk::Neighbor::RIGHT)] = cx == DebugWorldSize - 1 ? nullptr : &debug_world.at((cx + 1) * DebugWorldSize + cz);
+	//}
+
+	//for (int x = 0; x < DebugChunkSize; ++x) for (int z = 0; z < DebugChunkSize; ++z) {
+	//	debug_world.at(0).voxels[x][DebugChunkSize - 1][z].set = false; 
+
+	//	debug_world.at(1).voxels[x][DebugChunkSize - 1][z].set = false;
+	//	debug_world.at(1).voxels[x][DebugChunkSize - 2][z].set = false;
+
+	//	debug_world.at(2).voxels[x][2][z].set = false;
+	//	
+	//	debug_world.at(3).voxels[x][0][z].set = false;
+	//}
+	//
+	//debug_world.at(1).voxels[0][0][0].set = false;
+
+	//debug_world.at(0).voxels[0][1][2].set = false;
+	//debug_world.at(1).voxels[2][2][2].set = true;
+	//debug_world.at(1).voxels[2][3][2].set = true;
+	//debug_world.at(1).voxels[2][4][2].set = true;
+	//debug_world.at(1).voxels[2][5][2].set = true;
+	//debug_world.at(1).voxels[2][6][2].set = true;
+
+
+	//std::vector<mk::WorldObject*> debug_world_objects;
+	//for (int cx = 0; cx < DebugWorldSize; ++cx) for (int cz = 0; cz < DebugWorldSize; ++cz) {
+	//	mk::WorldObject* obj = new mk::WorldObject;
+	//	debug_world_objects.push_back(obj);
+
+	//	obj->mesh() = std::make_shared<mk::Mesh>(mk::get_chunk_mesh(debug_world.at(cx * DebugWorldSize + cz)));
+	//	obj->mesh()->with_shader(shader);
+	//	obj->transform().position = glm::vec3(DebugChunkSize * cx - 50.0f, 0.0f, DebugChunkSize * cz);
+	//	obj->transform().scale = 0.5f;
+	//}
+
+	ctx->camera().pos.z = 0.0;
+	ctx->far = 1000.0f;
+	skybox->mesh()->depth_mask = false;
+
+	int frames = 0;
+	auto start = std::chrono::steady_clock::now();
+	int fps_this_time = 0;
+
+	std::chrono::nanoseconds elapsed;
+
+	while (not ctx->should_close()) {
+		ctx->schedule_mesh_to_draw(skybox);
+
+		//for (auto* obj : sphere_world_objs) {
+		//	float distance = glm::distance(obj->transform().position, ctx->camera().pos);
+		//	if (distance < 1000.0f) {
+		//		ctx->schedule_mesh_to_draw(obj);
+		//	}
+		//}
+
+		//for (auto* obj : debug_world_objects) ctx->schedule_mesh_to_draw(obj);
+
+		std::stringstream ss;
+		ss << "x: " << (int) ctx->camera().pos.x << " y: " << (int) ctx->camera().pos.y << " z: " << (int) ctx->camera().pos.z << " | " << fps_this_time << "fps";
+		std::string title = ss.str();
+		glfwSetWindowTitle(ctx->window, title.c_str());
+
+		skybox->transform().pitch = -glm::radians(ctx->camera().pitch);
+		skybox->transform().yaw = glm::radians(ctx->camera().yaw);
+
+		ctx->draw();
+
+		++frames;
+
+		auto end = std::chrono::steady_clock::now();
+		elapsed = (end - start);
+
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 1000) {
+			double seconds = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()) / 1000.0;
+			fps_this_time = (double)frames / seconds;
+			
+			frames = 0;
+			elapsed = end - end;
+			start = end; 
+		}
+	}
+}
